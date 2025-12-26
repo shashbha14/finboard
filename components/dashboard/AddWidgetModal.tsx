@@ -312,7 +312,7 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                 <div className="p-6 space-y-4">
                     {step === 1 && (
                         <div className="grid grid-cols-2 gap-4">
-                            {['card', 'table', 'chart', 'accordion'].map((t) => (
+                            {['card', 'table', 'chart', 'accordion', 'watchlist', 'market'].map((t) => (
                                 <button
                                     key={t}
                                     onClick={() => setType(t as WidgetType)}
@@ -353,6 +353,21 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                                         onChange={handleSymbolChange}
                                         placeholder={selectedPreset === 'Indian Stock API' ? 'e.g. TCS' : 'e.g. MSFT'}
                                         className="mt-1 border-blue-500/50"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Watchlist Symbol Input */}
+                            {type === 'watchlist' && (
+                                <div>
+                                    <label className="text-xs uppercase text-muted-foreground font-semibold">
+                                        Symbols (comma separated)
+                                    </label>
+                                    <Input
+                                        value={config.symbols?.join(', ') || ''}
+                                        onChange={(e) => setConfig({ ...config, symbols: e.target.value.split(',').map(s => s.trim().toUpperCase()) })}
+                                        placeholder="AAPL, MSFT, GOOG"
+                                        className="mt-1 bg-background"
                                     />
                                 </div>
                             )}

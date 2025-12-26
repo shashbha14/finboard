@@ -1,68 +1,106 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Widget } from '@/lib/types';
 import { useWidgetData, getNestedValue } from '@/hooks/useWidgetData';
 import { Input } from '@/components/ui/primitives';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface TableWidgetProps {
     widget: Widget;
 }
 
 export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
-    const { data, loading, error } = useWidgetData(widget.config);
-    const { listPath, columns } = widget.config.dataMapping || {};
+    const { data, loading: isLoading, error } = useWidgetData(widget.config);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(5);
+    const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
-    const listData = useMemo(() => {
-        if (!data) {
-            console.log('[TableWidget] No data available');
-            return [];
-        }
+    // Handle string or object data
+    const tableData = useMemo(() => {
+        if (!data) return [];
+        const rawList = widget.config.dataMapping?.listPath
+            ? getNestedValue(data, widget.config.dataMapping.listPath)
+            : data;
 
-        // If listPath is provided, use it. Otherwise use data directly.
-        const list = listPath ? getNestedValue(data, listPath) : data;
-
-        console.log('[TableWidget] Data processing:', {
-            hasData: !!data,
-            listPath,
-            listType: typeof list,
-            isArray: Array.isArray(list),
-            listKeys: list && typeof list === 'object' ? Object.keys(list) : null,
-            dataKeys: data ? Object.keys(data) : []
-        });
-
-        // Handle single object by wrapping it in an array
-        if (Array.isArray(list)) return list;
-        if (list && typeof list === 'object') return [list];
+        if (Array.isArray(rawList)) return rawList;
+        if (rawList && typeof rawList === 'object') return [rawList];
         return [];
-    }, [data, listPath]);
+    }, [data, widget.config.dataMapping?.listPath]);
 
+    // 1. Filter
     const filteredData = useMemo(() => {
-        if (!searchTerm) return listData;
-        return listData.filter((item: any) =>
+        if (!searchTerm) return tableData;
+        return tableData.filter((item: any) =>
             Object.values(item).some(val =>
                 String(val).toLowerCase().includes(searchTerm.toLowerCase())
             )
         );
-    }, [listData, searchTerm]);
+    }, [tableData, searchTerm]);
 
-    // Ensure we have columns or generate them - MUST be called before any early returns
+    // 2. Sort
+    const sortedData = useMemo(() => {
+        const sortableItems = [...filteredData];
+        if (!sortConfig.key) return sortableItems;
+
+        return sortableItems.sort((a, b) => {
+            const column = widget.config.dataMapping?.columns?.find(c => c.header === sortConfig.key);
+            const path = column ? column.path : sortConfig.key;
+
+            const valA = getNestedValue(a, path);
+            const valB = getNestedValue(b, path);
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [filteredData, sortConfig, widget.config.dataMapping?.columns]);
+
+    // 3. Paginate
+    const totalPages = Math.ceil(sortedData.length / pageSize);
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        return sortedData.slice(startIndex, startIndex + pageSize);
+    }, [sortedData, currentPage, pageSize]);
+
+    // Reset page when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    const handleSort = (header: string) => {
+        setSortConfig(current => ({
+            key: header,
+            direction: current.key === header && current.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    // Auto-generate columns
     const tableColumns = useMemo(() => {
-        if (columns && columns.length > 0) {
-            return columns;
+        const columnsConfig = widget.config.dataMapping?.columns;
+        if (columnsConfig && columnsConfig.length > 0) {
+            return columnsConfig;
         }
-        // Auto-generate columns from first item
-        if (listData.length > 0 && listData[0]) {
-            return Object.keys(listData[0]).slice(0, 10).map(key => ({
+        const firstItem = tableData[0];
+        if (firstItem) {
+            return Object.keys(firstItem).slice(0, 10).map(key => ({
                 header: key.replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
                 path: key
             }));
         }
         return [];
-    }, [columns, listData]);
+    }, [widget.config.dataMapping?.columns, tableData]);
 
-    if (loading && !data) return <div className="p-4 animate-pulse">Loading...</div>;
-    if (error) return <div className="p-4 text-red-400 text-xs">Error: {error}</div>;
-    if (!listData.length) return <div className="p-4 text-gray-500 text-xs">No Data Found</div>;
+    if (isLoading) {
+        return <div className="p-4 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>;
+    }
+
+    if (error) {
+        return <div className="p-4 text-red-400 text-xs">Error: {error}</div>;
+    }
+
+    if (!tableData.length && !isLoading) {
+        return <div className="p-4 text-gray-500 text-xs">No Data Found</div>;
+    }
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
@@ -77,81 +115,75 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
             <div className="flex-1 overflow-auto">
                 {tableColumns.length > 0 ? (
                     <table className="w-full text-xs text-left">
-                        <thead className="bg-muted sticky top-0">
+                        <thead className="bg-muted sticky top-0 z-10">
                             <tr>
                                 {tableColumns.map((col, idx) => (
-                                    <th key={idx} className="p-2 font-semibold text-muted-foreground border-b border-border">
-                                        {col.header}
+                                    <th
+                                        key={idx}
+                                        onClick={() => handleSort(col.header)}
+                                        className="p-2 font-semibold text-muted-foreground border-b border-border cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            {col.header}
+                                            {sortConfig.key === col.header && (
+                                                sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                                            )}
+                                        </div>
                                     </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredData.map((item: any, rowIdx: number) => (
+                            {paginatedData.map((item: any, rowIdx: number) => (
                                 <tr key={rowIdx} className="border-b border-border hover:bg-muted/50">
                                     {tableColumns.map((col, colIdx) => {
-                                        // Handle paths that start with brackets (e.g., '["01. symbol"]')
-                                        // When listPath is used, the item is already the target object
-                                        let value: any;
-                                        const path = col.path;
+                                        const value = getNestedValue(item, col.path);
+                                        let formattedValue: any = value;
 
-                                        if (path.startsWith('[') && path.endsWith(']')) {
-                                            // Extract the key from brackets: '["01. symbol"]' -> '01. symbol'
-                                            const key = path.slice(1, -1).replace(/^['"]|['"]$/g, '');
-                                            value = item[key];
-                                        } else {
-                                            // Use getNestedValue for nested paths or direct keys
-                                            value = getNestedValue(item, path);
-                                        }
-
-                                        // Handle case where value is undefined or null
-                                        if (value === undefined || value === null) {
-                                            value = '';
-                                        }
-
-                                        // Handle objects and arrays - don't try to display them directly
+                                        // 1. Handle Objects/Arrays
                                         if (typeof value === 'object' && value !== null) {
                                             if (Array.isArray(value)) {
-                                                value = value.length > 0 ? `${value.length} items` : '';
+                                                formattedValue = value.length > 0 ? `${value.length} items` : '';
                                             } else {
-                                                // For objects, try to get a meaningful string representation
-                                                value = '';
+                                                formattedValue = '';
                                             }
                                         }
-
-                                        // Parse string values to numbers if possible (Alpha Vantage returns strings)
-                                        if (typeof value === 'string' && value.trim() !== '' && !value.includes('%')) {
-                                            const numValue = parseFloat(value);
-                                            if (!isNaN(numValue) && isFinite(numValue)) {
-                                                value = numValue;
-                                            }
+                                        // 2. Handle Booleans
+                                        else if (typeof value === 'boolean') {
+                                            formattedValue = value ? 'Yes' : 'No';
                                         }
+                                        // 3. Handle Numbers/Strings
+                                        else {
+                                            // Ensure value is string for parsing check
+                                            let valStr = String(value || '');
+                                            let numVal = typeof value === 'number' ? value : parseFloat(valStr);
 
-                                        let formattedValue = String(value || '');
+                                            // Check if it's a valid number and not a percentage string already
+                                            const isNumber = !isNaN(numVal) && isFinite(numVal) && !valStr.includes('%');
 
-                                        // Format based on field name, path, or value type
-                                        if (typeof value === 'number') {
-                                            const pathLower = path.toLowerCase();
-                                            const headerLower = col.header.toLowerCase();
+                                            if (isNumber) {
+                                                const pathLower = col.path.toLowerCase();
+                                                const headerLower = col.header.toLowerCase();
 
-                                            // Check if it's a price field
-                                            if (path === 'c' || path === 'h' || path === 'l' || path === 'o' || path === 'pc' ||
-                                                pathLower.includes('price') || pathLower.includes('high') || pathLower.includes('low') ||
-                                                pathLower.includes('open') || pathLower.includes('close')) {
-                                                // Price fields - format as currency
-                                                formattedValue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-                                            } else if (path === 'dp' || pathLower.includes('change percent') || headerLower.includes('change %')) {
-                                                // Percentage change
-                                                formattedValue = `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-                                            } else if (path === 'd' || (pathLower.includes('change') && !pathLower.includes('percent'))) {
-                                                // Dollar change (but not percentage)
-                                                formattedValue = `${value >= 0 ? '+' : ''}${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}`;
+                                                // Price Formatting
+                                                if (['c', 'h', 'l', 'o', 'pc'].includes(col.path) ||
+                                                    pathLower.includes('price') || pathLower.includes('close')) {
+                                                    formattedValue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(numVal);
+                                                }
+                                                // Percentage Formatting
+                                                else if (col.path === 'dp' || pathLower.includes('percent')) {
+                                                    formattedValue = `${numVal >= 0 ? '+' : ''}${numVal.toFixed(2)}%`;
+                                                }
+                                                // Change Formatting
+                                                else if (col.path === 'd' || pathLower.includes('change')) {
+                                                    formattedValue = `${numVal >= 0 ? '+' : ''}${numVal.toFixed(2)}`;
+                                                }
+                                                else {
+                                                    formattedValue = valStr;
+                                                }
                                             } else {
-                                                formattedValue = value.toLocaleString();
+                                                formattedValue = valStr;
                                             }
-                                        } else if (typeof value === 'string' && value.includes('%')) {
-                                            // Handle string percentages from Alpha Vantage (e.g., "0.2568%")
-                                            formattedValue = value;
                                         }
 
                                         return (
@@ -165,9 +197,32 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
                         </tbody>
                     </table>
                 ) : (
-                    <div className="p-4 text-gray-500 text-xs text-center">No columns configured</div>
+                    <div className="p-4 text-gray-500 text-sm text-center">No data available</div>
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="p-2 border-t border-border flex items-center justify-between bg-muted/20">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className="p-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <ChevronLeft className="w-4 h-4 text-foreground" />
+                    </button>
+                    <span className="text-xs text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className="p-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <ChevronRight className="w-4 h-4 text-foreground" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
