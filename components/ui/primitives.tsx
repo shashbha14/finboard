@@ -6,19 +6,27 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(({ className, ...props }, ref) => (
-    <button
-        ref={ref}
-        className={cn(
-            "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-            "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-            "h-9 px-4 py-2",
-            "bg-blue-600 text-white hover:bg-blue-700", // Default style
-            className
-        )}
-        {...props}
-    />
-))
+export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'default' | 'ghost' | 'outline', size?: 'default' | 'sm' | 'lg' | 'icon' }>(({ className, variant = 'default', size = 'default', ...props }, ref) => {
+    return (
+        <button
+            ref={ref}
+            className={cn(
+                "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                // Variants
+                variant === 'default' && "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+                variant === 'ghost' && "hover:bg-accent hover:text-accent-foreground",
+                variant === 'outline' && "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+                // Sizes
+                size === 'default' && "h-9 px-4 py-2",
+                size === 'sm' && "h-8 rounded-md px-3 text-xs",
+                size === 'lg' && "h-10 rounded-md px-8",
+                size === 'icon' && "h-9 w-9",
+                className
+            )}
+            {...props}
+        />
+    )
+})
 Button.displayName = "Button"
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ className, type, ...props }, ref) => (
@@ -26,7 +34,6 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
         type={type}
         className={cn(
             "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            "border-gray-600 bg-gray-900 text-gray-100", // Dark mode default
             className
         )}
         ref={ref}
@@ -40,7 +47,6 @@ export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
         ref={ref}
         className={cn(
             "rounded-xl border bg-card text-card-foreground shadow",
-            "bg-gray-800 border-gray-700 text-white", // Dark mode default
             className
         )}
         {...props}

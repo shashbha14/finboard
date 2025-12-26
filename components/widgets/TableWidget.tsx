@@ -17,10 +17,10 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
             console.log('[TableWidget] No data available');
             return [];
         }
-        
+
         // If listPath is provided, use it. Otherwise use data directly.
         const list = listPath ? getNestedValue(data, listPath) : data;
-        
+
         console.log('[TableWidget] Data processing:', {
             hasData: !!data,
             listPath,
@@ -29,7 +29,7 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
             listKeys: list && typeof list === 'object' ? Object.keys(list) : null,
             dataKeys: data ? Object.keys(data) : []
         });
-        
+
         // Handle single object by wrapping it in an array
         if (Array.isArray(list)) return list;
         if (list && typeof list === 'object') return [list];
@@ -66,21 +66,21 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
-            <div className="p-2 border-b border-gray-800">
+            <div className="p-2 border-b border-border">
                 <Input
                     placeholder="Search..."
                     value={searchTerm || ''}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-7 text-xs"
+                    className="h-7 text-xs bg-background"
                 />
             </div>
             <div className="flex-1 overflow-auto">
                 {tableColumns.length > 0 ? (
                     <table className="w-full text-xs text-left">
-                        <thead className="bg-gray-800 sticky top-0">
+                        <thead className="bg-muted sticky top-0">
                             <tr>
                                 {tableColumns.map((col, idx) => (
-                                    <th key={idx} className="p-2 font-semibold text-gray-300 border-b border-gray-700">
+                                    <th key={idx} className="p-2 font-semibold text-muted-foreground border-b border-border">
                                         {col.header}
                                     </th>
                                 ))}
@@ -88,13 +88,13 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
                         </thead>
                         <tbody>
                             {filteredData.map((item: any, rowIdx: number) => (
-                                <tr key={rowIdx} className="border-b border-gray-800 hover:bg-gray-800/50">
+                                <tr key={rowIdx} className="border-b border-border hover:bg-muted/50">
                                     {tableColumns.map((col, colIdx) => {
                                         // Handle paths that start with brackets (e.g., '["01. symbol"]')
                                         // When listPath is used, the item is already the target object
                                         let value: any;
                                         const path = col.path;
-                                        
+
                                         if (path.startsWith('[') && path.endsWith(']')) {
                                             // Extract the key from brackets: '["01. symbol"]' -> '01. symbol'
                                             const key = path.slice(1, -1).replace(/^['"]|['"]$/g, '');
@@ -103,12 +103,12 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
                                             // Use getNestedValue for nested paths or direct keys
                                             value = getNestedValue(item, path);
                                         }
-                                        
+
                                         // Handle case where value is undefined or null
                                         if (value === undefined || value === null) {
                                             value = '';
                                         }
-                                        
+
                                         // Handle objects and arrays - don't try to display them directly
                                         if (typeof value === 'object' && value !== null) {
                                             if (Array.isArray(value)) {
@@ -118,7 +118,7 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
                                                 value = '';
                                             }
                                         }
-                                        
+
                                         // Parse string values to numbers if possible (Alpha Vantage returns strings)
                                         if (typeof value === 'string' && value.trim() !== '' && !value.includes('%')) {
                                             const numValue = parseFloat(value);
@@ -126,17 +126,17 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
                                                 value = numValue;
                                             }
                                         }
-                                        
+
                                         let formattedValue = String(value || '');
-                                        
+
                                         // Format based on field name, path, or value type
                                         if (typeof value === 'number') {
                                             const pathLower = path.toLowerCase();
                                             const headerLower = col.header.toLowerCase();
-                                            
+
                                             // Check if it's a price field
                                             if (path === 'c' || path === 'h' || path === 'l' || path === 'o' || path === 'pc' ||
-                                                pathLower.includes('price') || pathLower.includes('high') || pathLower.includes('low') || 
+                                                pathLower.includes('price') || pathLower.includes('high') || pathLower.includes('low') ||
                                                 pathLower.includes('open') || pathLower.includes('close')) {
                                                 // Price fields - format as currency
                                                 formattedValue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
@@ -153,9 +153,9 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
                                             // Handle string percentages from Alpha Vantage (e.g., "0.2568%")
                                             formattedValue = value;
                                         }
-                                        
+
                                         return (
-                                            <td key={colIdx} className="p-2 text-gray-200" title={String(value || '')}>
+                                            <td key={colIdx} className="p-2 text-card-foreground" title={String(value || '')}>
                                                 {formattedValue}
                                             </td>
                                         );

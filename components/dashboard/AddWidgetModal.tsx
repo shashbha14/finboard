@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDashboardStore } from '@/lib/store';
-import { WidgetType, Widget } from '@/lib/types';
+import { WidgetType, Widget, WidgetConfig } from '@/lib/types';
 import { Button, Input } from '@/components/ui/primitives';
 import { X } from 'lucide-react';
 
@@ -16,7 +16,7 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
     const [symbol, setSymbol] = useState('AAPL');
     const [selectedPreset, setSelectedPreset] = useState<string>('Custom');
 
-    const [config, setConfig] = useState({
+    const [config, setConfig] = useState<Omit<WidgetConfig, 'id' | 'type'> & { title: string }>({
         title: '',
         apiUrl: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
         refreshInterval: 60,
@@ -67,6 +67,25 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
         }
     ];
 
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setStep(1);
+            setType('card');
+            setSymbol('AAPL');
+            setSelectedPreset('Custom');
+            setConfig({
+                title: '',
+                apiUrl: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+                refreshInterval: 60,
+                dataMapping: {
+                    valuePath: 'bitcoin.usd',
+                    subtitlePath: 'usd'
+                }
+            });
+        }
+    }, [isOpen]);
+
     const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const presetName = e.target.value;
         setSelectedPreset(presetName);
@@ -99,13 +118,11 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                         subtitlePath: '', // Not used for charts
                         xAxisPath: 't', // timestamp
                         yAxisPath: 'c', // current price
-                        // No listPath - single object will be wrapped automatically
                     };
                 } else if (type === 'table') {
                     dataMapping = {
                         valuePath: '', // Not used for tables
                         subtitlePath: '', // Not used for tables
-                        // No listPath - single object will be wrapped automatically
                         columns: [
                             { header: 'Current', path: 'c' },
                             { header: 'Change', path: 'd' },
@@ -128,13 +145,11 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                         subtitlePath: '', // Not used for charts
                         xAxisPath: 'Global Quote["07. latest trading day"]', // date
                         yAxisPath: 'Global Quote["05. price"]', // current price
-                        // No listPath - single object will be wrapped automatically
                     };
                 } else if (type === 'table') {
                     dataMapping = {
                         valuePath: '', // Not used for tables
                         subtitlePath: '', // Not used for tables
-                        // Use listPath to get the Global Quote object, then wrap it
                         listPath: 'Global Quote',
                         columns: [
                             { header: 'Symbol', path: '["01. symbol"]' },
@@ -158,16 +173,10 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                 }
             }
 
-            // For Indian API, use accordion widget type by default and set appropriate title
-            let widgetTitle = (preset as any).isDynamic 
+            // For Indian API, use appropriate title
+            let widgetTitle = (preset as any).isDynamic
                 ? (preset.name === 'Indian Stock API' ? `${symbol} Stock Info` : `${symbol} Price`)
                 : preset.name.replace(/\s\(.*\)/, '');
-            
-            // For Indian API, recommend accordion widget type
-            if (preset.name === 'Indian Stock API' && type !== 'accordion') {
-                // Auto-switch to accordion for better display of nested data
-                setType('accordion');
-            }
 
             setConfig({
                 ...config,
@@ -181,16 +190,15 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
     // Update URL when symbol/name changes for dynamic presets
     const handleSymbolChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value;
-        // For Indian API, preserve case; for others, use uppercase
-        const newSymbol = selectedPreset === 'Indian Stock API' 
-            ? inputValue 
+        const newSymbol = selectedPreset === 'Indian Stock API'
+            ? inputValue
             : inputValue.toUpperCase();
         setSymbol(newSymbol);
 
         const preset = API_PRESETS.find(p => p.name === selectedPreset);
         if (preset && (preset as any).isDynamic) {
-            const title = preset.name === 'Indian Stock API' 
-                ? `${newSymbol} Stock Info` 
+            const title = preset.name === 'Indian Stock API'
+                ? `${newSymbol} Stock Info`
                 : `${newSymbol} Price`;
             setConfig(prev => ({
                 ...prev,
@@ -283,25 +291,20 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
             type,
             config: {
                 ...config,
-                // Ensure paths are correct
                 dataMapping: config.dataMapping
             }
         };
         addWidget(newWidget);
         onClose();
-        // Reset form
-        setStep(1);
-        setType('card');
-        setSymbol('AAPL');
-        setSelectedPreset('Custom');
+        // State is reset by useEffect when isOpen changes
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="w-[500px] bg-slate-900 border border-slate-800 rounded-lg shadow-xl overflow-hidden">
-                <div className="flex justify-between items-center p-4 border-b border-slate-800">
-                    <h2 className="text-lg font-semibold text-white">Add New Widget</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <div className="w-[500px] bg-popover border border-border rounded-lg shadow-xl overflow-hidden text-popover-foreground">
+                <div className="flex justify-between items-center p-4 border-b border-border">
+                    <h2 className="text-lg font-semibold">Add New Widget</h2>
+                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -313,9 +316,9 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                                 <button
                                     key={t}
                                     onClick={() => setType(t as WidgetType)}
-                                    className={`p-4 rounded border ${type === t
-                                        ? 'border-blue-500 bg-blue-500/10 text-white'
-                                        : 'border-slate-700 hover:border-slate-600 text-gray-400'
+                                    className={`p-4 rounded border transition-colors ${type === t
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-border hover:border-primary/50 text-muted-foreground'
                                         }`}
                                 >
                                     <div className="capitalize font-medium">{t}</div>
@@ -327,9 +330,9 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                     {step === 2 && (
                         <div className="space-y-4">
                             <div>
-                                <label className="text-xs uppercase text-gray-500 font-semibold">API Preset</label>
+                                <label className="text-xs uppercase text-muted-foreground font-semibold">API Preset</label>
                                 <select
-                                    className="w-full mt-1 h-9 rounded-md border border-gray-600 bg-gray-900 text-gray-100 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full mt-1 h-9 rounded-md border border-input bg-background text-foreground px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                                     value={selectedPreset}
                                     onChange={handlePresetChange}
                                 >
@@ -342,7 +345,7 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                             {/* Show symbol input for any dynamic preset (Finnhub, Alpha Vantage, Indian API) */}
                             {(selectedPreset === 'Finnhub (Stock)' || selectedPreset === 'Alpha Vantage (Stock)' || selectedPreset === 'Indian Stock API') && (
                                 <div>
-                                    <label className="text-xs uppercase text-blue-400 font-semibold">
+                                    <label className="text-xs uppercase text-blue-500 font-semibold">
                                         {selectedPreset === 'Indian Stock API' ? 'Stock Name' : 'Stock Symbol'}
                                     </label>
                                     <Input
@@ -355,32 +358,32 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                             )}
 
                             <div>
-                                <label className="text-xs uppercase text-gray-500 font-semibold">Title</label>
+                                <label className="text-xs uppercase text-muted-foreground font-semibold">Title</label>
                                 <Input
                                     value={config.title || ''}
                                     onChange={(e) => setConfig({ ...config, title: e.target.value })}
                                     placeholder="e.g. Bitcoin Price"
-                                    className="mt-1"
+                                    className="mt-1 bg-background"
                                 />
                             </div>
                             {selectedPreset === 'Custom' ? (
                                 <div>
-                                    <label className="text-xs uppercase text-gray-500 font-semibold">API URL</label>
+                                    <label className="text-xs uppercase text-muted-foreground font-semibold">API URL</label>
                                     <Input
                                         value={config.apiUrl || ''}
                                         onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
                                         placeholder="https://api.example.com/data"
-                                        className="mt-1 font-mono text-xs text-gray-400"
+                                        className="mt-1 font-mono text-xs text-muted-foreground bg-background"
                                     />
                                 </div>
                             ) : (
-                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-300">
+                                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-600 dark:text-blue-300">
                                     Using secure endpoint with environment token.
                                 </div>
                             )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs uppercase text-gray-500 font-semibold">Value Path (JSON)</label>
+                                    <label className="text-xs uppercase text-muted-foreground font-semibold">Value Path (JSON)</label>
                                     <Input
                                         value={config.dataMapping?.valuePath || ''}
                                         onChange={(e) => setConfig({
@@ -388,16 +391,16 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                                             dataMapping: { ...config.dataMapping, valuePath: e.target.value }
                                         })}
                                         placeholder="e.g. data.price"
-                                        className="mt-1"
+                                        className="mt-1 bg-background"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs uppercase text-gray-500 font-semibold">Refresh (sec)</label>
+                                    <label className="text-xs uppercase text-muted-foreground font-semibold">Refresh (sec)</label>
                                     <Input
                                         type="number"
                                         value={config.refreshInterval ?? 60}
                                         onChange={(e) => setConfig({ ...config, refreshInterval: Number(e.target.value) || 60 })}
-                                        className="mt-1"
+                                        className="mt-1 bg-background"
                                     />
                                 </div>
                             </div>
@@ -405,10 +408,10 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose 
                     )}
                 </div>
 
-                <div className="p-4 border-t border-slate-800 flex justify-end gap-2">
+                <div className="p-4 border-t border-border flex justify-end gap-2 bg-muted/10">
                     {step === 2 ? (
                         <>
-                            <Button onClick={() => setStep(1)} className="bg-transparent hover:bg-slate-800">Back</Button>
+                            <Button onClick={() => setStep(1)} variant="ghost" className="hover:bg-muted">Back</Button>
                             <Button onClick={handleAdd}>Add Widget</Button>
                         </>
                     ) : (

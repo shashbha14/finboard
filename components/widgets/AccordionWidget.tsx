@@ -38,9 +38,9 @@ const formatValue = (value: any): string => {
 };
 
 // Recursive component to render nested objects
-const NestedObjectRenderer: React.FC<{ 
-    data: any; 
-    level?: number; 
+const NestedObjectRenderer: React.FC<{
+    data: any;
+    level?: number;
     maxLevel?: number;
     parentKey?: string;
 }> = ({ data, level = 0, maxLevel = 5, parentKey = '' }) => {
@@ -54,13 +54,13 @@ const NestedObjectRenderer: React.FC<{
         if (data.length === 0) {
             return <span className="text-gray-500 italic">Empty array</span>;
         }
-        
+
         return (
             <div className="space-y-2">
                 {data.map((item, idx) => {
                     const itemKey = `${parentKey}-${idx}`;
                     const isExpanded = expanded.has(itemKey);
-                    
+
                     if (typeof item === 'object' && item !== null && level < maxLevel) {
                         return (
                             <div key={idx} className="border-l-2 border-gray-700 pl-3">
@@ -85,9 +85,9 @@ const NestedObjectRenderer: React.FC<{
                                 </button>
                                 {isExpanded && (
                                     <div className="ml-6 mt-1">
-                                        <NestedObjectRenderer 
-                                            data={item} 
-                                            level={level + 1} 
+                                        <NestedObjectRenderer
+                                            data={item}
+                                            level={level + 1}
                                             maxLevel={maxLevel}
                                             parentKey={itemKey}
                                         />
@@ -96,7 +96,7 @@ const NestedObjectRenderer: React.FC<{
                             </div>
                         );
                     }
-                    
+
                     return (
                         <div key={idx} className="text-sm text-gray-300 pl-4">
                             <span className="text-gray-500">[{idx}]:</span> {formatValue(item)}
@@ -135,7 +135,7 @@ const NestedObjectRenderer: React.FC<{
                                         }
                                         setExpanded(newExpanded);
                                     }}
-                                    className="flex items-center gap-2 text-gray-300 hover:text-white w-full text-left py-1"
+                                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-full text-left py-1"
                                 >
                                     {isExpanded ? (
                                         <ChevronDown className="w-4 h-4 flex-shrink-0" />
@@ -147,10 +147,10 @@ const NestedObjectRenderer: React.FC<{
                                     </span>
                                 </button>
                                 {isExpanded && (
-                                    <div className="ml-6 mt-1 border-l-2 border-gray-700 pl-3">
-                                        <NestedObjectRenderer 
-                                            data={value} 
-                                            level={level + 1} 
+                                    <div className="ml-6 mt-1 border-l-2 border-border pl-3">
+                                        <NestedObjectRenderer
+                                            data={value}
+                                            level={level + 1}
                                             maxLevel={maxLevel}
                                             parentKey={itemKey}
                                         />
@@ -159,10 +159,10 @@ const NestedObjectRenderer: React.FC<{
                             </div>
                         ) : (
                             <div className="flex gap-2 py-1">
-                                <span className="font-medium text-gray-400 capitalize min-w-[120px]">
+                                <span className="font-medium text-muted-foreground capitalize min-w-[120px]">
                                     {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
                                 </span>
-                                <span className="text-gray-300 flex-1">{formatValue(value)}</span>
+                                <span className="text-foreground flex-1">{formatValue(value)}</span>
                             </div>
                         )}
                     </div>

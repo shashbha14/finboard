@@ -19,17 +19,17 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
     isLoading
 }) => {
     return (
-        <Card className="h-full flex flex-col overflow-hidden relative group">
-            <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-900/50">
-                <h3 className="font-semibold text-sm truncate text-gray-200">
+        <Card className="h-full flex flex-col overflow-hidden relative group bg-card border-border text-card-foreground shadow-sm">
+            <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
+                <h3 className="font-semibold text-sm truncate text-card-foreground">
                     {widget.config.title}
                 </h3>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     {/* Placeholder for settings/refresh */}
-                    {isLoading && <RefreshCw className="w-3 h-3 animate-spin text-gray-400" />}
+                    {isLoading && <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" />}
                     <button
                         onClick={onRemove}
-                        className="text-gray-400 hover:text-red-400 transition-colors"
+                        className="text-muted-foreground hover:text-destructive transition-colors"
                     >
                         <X className="w-4 h-4" />
                     </button>
