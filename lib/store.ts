@@ -12,7 +12,7 @@ interface DashboardState {
     // Actions
     addWidget: (widget: Widget) => void;
     removeWidget: (id: string) => void;
-    updateWidgetConfig: (id: string, config: Partial<Widget['config']>) => void;
+    updateWidget: (id: string, updates: Partial<Widget>) => void;
     updateLayout: (layout: any[]) => void;
     toggleTheme: () => void;
 }
@@ -35,9 +35,9 @@ export const useDashboardStore = create<DashboardState>()(
                 layout: state.layout.filter((l) => l.i !== id)
             })),
 
-            updateWidgetConfig: (id, config) => set((state) => ({
+            updateWidget: (id, updates) => set((state) => ({
                 widgets: state.widgets.map((w) =>
-                    w.id === id ? { ...w, config: { ...w.config, ...config } } : w
+                    w.id === id ? { ...w, ...updates } : w
                 ),
             })),
 

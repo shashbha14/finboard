@@ -10,8 +10,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useDashboardStore } from "@/lib/store";
 import { DASHBOARD_TEMPLATES } from "@/lib/templates";
 
+import { Widget } from "@/lib/types";
+
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { widgets, layout, theme, addWidget, updateLayout, toggleTheme } = useDashboardStore();
 
@@ -129,7 +132,10 @@ export default function Home() {
       </header>
 
       <div className="bg-muted/30 rounded-xl border border-border min-h-[600px] p-4">
-        <DashboardGrid />
+        <DashboardGrid onEditWidget={(widget) => {
+          setEditingWidget(widget);
+          setIsModalOpen(true);
+        }} />
 
         {/* Empty State Hint if needed */}
         <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none opacity-5">
@@ -137,7 +143,14 @@ export default function Home() {
         </div>
       </div>
 
-      <AddWidgetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AddWidgetModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingWidget(null); // Clear editing state on close
+        }}
+        widgetToEdit={editingWidget}
+      />
     </main>
   );
 }

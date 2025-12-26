@@ -12,6 +12,7 @@ import { MarketWidget } from '../widgets/MarketWidget';
 interface WidgetRendererProps {
     widget: Widget;
     onRemove: () => void;
+    onEdit?: () => void;
 }
 
 const renderContent = (widget: Widget) => {
@@ -33,9 +34,11 @@ const renderContent = (widget: Widget) => {
     }
 };
 
-export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onRemove }) => {
+// ...
+
+export const WidgetRenderer: React.FC<WidgetRendererProps> = ({ widget, onRemove, onEdit }) => {
     return (
-        <WidgetContainer widget={widget} onRemove={onRemove}>
+        <WidgetContainer widget={widget} onRemove={onRemove} onEdit={onEdit}>
             {renderContent(widget)}
         </WidgetContainer>
     );

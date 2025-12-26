@@ -8,7 +8,11 @@ import { useWidth } from '@/hooks/useWidth';
 import { useDashboardStore } from '@/lib/store';
 import { WidgetRenderer } from './WidgetRenderer';
 
-export const DashboardGrid = () => {
+interface DashboardGridProps {
+    onEditWidget?: (widget: any) => void;
+}
+
+export const DashboardGrid = ({ onEditWidget }: DashboardGridProps) => {
     const { widgets, layout, updateLayout, removeWidget } = useDashboardStore();
     const [mounted, setMounted] = useState(false);
     const { ref, width } = useWidth();
@@ -18,7 +22,6 @@ export const DashboardGrid = () => {
     }, []);
 
     const onLayoutChange = (currentLayout: any, allLayouts: any) => {
-        // Only update if mounted to avoid hydration mismatch issues initially
         if (mounted) {
             updateLayout(currentLayout);
         }
@@ -37,7 +40,7 @@ export const DashboardGrid = () => {
                 rowHeight={60}
                 onLayoutChange={onLayoutChange}
                 // @ts-expect-error type definition mismatch
-                draggableHandle=".group" // Allow dragging by the card container
+                draggableHandle=".grab-handle"
                 isDraggable
                 isResizable
             >
@@ -46,6 +49,7 @@ export const DashboardGrid = () => {
                         <WidgetRenderer
                             widget={widget}
                             onRemove={() => removeWidget(widget.id)}
+                            onEdit={() => onEditWidget?.(widget)}
                         />
                     </div>
                 ))}

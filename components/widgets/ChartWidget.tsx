@@ -1,45 +1,45 @@
 import React, { useMemo, useState } from 'react';
 import { Widget } from '@/lib/types';
-import { useWidgetData, getNestedValue } from '@/hooks/useWidgetData';
+import { useWidgetData } from '@/hooks/useWidgetData';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface ChartWidgetProps {
     widget: Widget;
 }
 
 export const ChartWidget: React.FC<ChartWidgetProps> = ({ widget }) => {
+    // Default hook data (generic API)
     const { data, loading: isLoading, error } = useWidgetData(widget.config);
-    const [interval, setInterval] = useState<'1D' | '1W' | '1M'>('1D');
+    const [interval, setInterval] = useState<'D' | 'W' | 'M'>('D');
     const { xAxisPath, yAxisPath } = widget.config.dataMapping || {};
 
     const chartData = useMemo(() => {
         if (isLoading || !data) return [];
 
         let processedData: any[] = [];
-
         if (Array.isArray(data)) {
             processedData = data;
         } else if (typeof data === 'object' && data !== null) {
-            // Try to find the time series key for Alpha Vantage or similar APIs
             const timeSeriesKey = Object.keys(data).find(k => k.includes('Time Series') || k.includes('Daily') || k.includes('Weekly'));
-
             if (timeSeriesKey && typeof data[timeSeriesKey] === 'object') {
-                // Convert { "2023-01-01": { ... } } to [ { date: "2023-01-01", ... } ]
                 processedData = Object.entries(data[timeSeriesKey]).map(([date, values]: [string, any]) => ({
                     date,
                     ...values
-                })).reverse(); // Sort oldest to newest
+                })).reverse();
             } else {
-                // Fallback for simple objects
                 processedData = [{ date: 'Current', ...data }];
             }
         }
-
         return processedData;
     }, [data, isLoading]);
 
     if (isLoading) {
-        return <div className="flex items-center justify-center h-full text-muted-foreground text-xs">Loading chart...</div>;
+        return (
+            <div className="flex flex-col gap-2 p-4 h-full justify-center">
+                <Skeleton className="h-[200px] w-full" />
+            </div>
+        );
     }
 
     if (error) {
@@ -52,20 +52,23 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({ widget }) => {
 
     return (
         <div className="flex flex-col h-full w-full p-2">
-            {/* Interval Selector */}
-            <div className="flex justify-end gap-1 mb-2">
-                {(['1D', '1W', '1M'] as const).map((t) => (
-                    <button
-                        key={t}
-                        onClick={() => setInterval(t)}
-                        className={`text-[10px] px-2 py-1 rounded transition-colors ${interval === t
+            {/* Header Controls */}
+            <div className="flex justify-end items-center mb-2">
+                {/* Interval Selector */}
+                <div className="flex gap-1">
+                    {(['D', 'W', 'M'] as const).map((t) => (
+                        <button
+                            key={t}
+                            onClick={() => setInterval(t)}
+                            className={`text-[10px] px-2 py-1 rounded transition-colors ${interval === t
                                 ? 'bg-primary text-primary-foreground font-medium'
                                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }`}
-                    >
-                        {t}
-                    </button>
-                ))}
+                                }`}
+                        >
+                            {t}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="flex-1 w-full min-h-0">
@@ -101,7 +104,7 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({ widget }) => {
                         />
                         <Area
                             type="monotone"
-                            dataKey={yAxisPath || "4. close"}
+                            dataKey={yAxisPath || "close"}
                             stroke="var(--color-primary)"
                             fillOpacity={1}
                             fill="url(#colorValue)"

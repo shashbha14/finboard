@@ -20,12 +20,15 @@ export interface WidgetConfig {
     xAxisPath?: string;
     yAxisPath?: string;
   };
+  chartType?: 'area' | 'bar' | 'line' | 'candle';
 }
 
 export interface Widget {
   id: string;
   type: WidgetType;
   config: WidgetConfig;
+  title?: string;
+  symbol?: string;
 }
 
 export type Theme = 'light' | 'dark';

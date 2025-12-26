@@ -1,60 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FinBoard - Advanced Personal Finance Dashboard
 
-## Getting Started
+FinBoard is a highly customizable, real-time finance dashboard built with Next.js, TypeScript, and Tailwind CSS. It allows users to track stocks, crypto, and market trends using interactive widgets.
 
-First, set up your environment variables by creating a `.env.local` file in the root directory:
+## 🚀 Features
 
-```bash
-# API Keys for Stock Data Services
+### Core Functionality
+- **Dynamic Widget System**: Add, remove, resize, and reorder widgets (Card, Table, Chart, Accordion, Watchlist, Market).
+- **Edit Configuration**: Modify existing widgets on the fly.
+- **Real-Time Data**: Live price updates using WebSockets (Finnhub).
+- **Multiple Data Sources**: 
+  - Finnhub (US Stocks, Candles)
+  - Alpha Vantage (Global Quotes, Top Gainers)
+  - Indian Stock API (NSE/BSE)
+  - CoinGecko (Resilient Crypto Prices)
 
-# Finnhub API Token
-# Get your token from: https://finnhub.io/
-NEXT_PUBLIC_FINNHUB_TOKEN=your_finnhub_token_here
-# Alternative (server-side only):
-FINNHUB_TOKEN=your_finnhub_token_here
+### Visualization & API
+- **Interactive Charts**: Switch between Area (Line) and Candle (Bar) representations with adjustable time intervals (Day, Week, Month).
+- **Specialized Widgets**:
+  - **Watchlist**: Track multiple tickers with live color-coded updates.
+  - **Market**: View Top Gainers/Losers.
+  - **Tables**: Sortable and paginated data tables.
 
-# Alpha Vantage API Key
-# Get your key from: https://www.alphavantage.co/support/#api-key
-NEXT_PUBLIC_ALPHAVANTAGE_TOKEN=your_alphavantage_key_here
-# Alternative (server-side only):
-ALPHAVANTAGE_TOKEN=your_alphavantage_key_here
+### UX & Personalization
+- **Theme Support**: Seamless Dark/Light mode switching.
+- **Templates**: One-click dashboard setups (US Tech, Crypto Tracker, Indian Market).
+- **Persistence**: Dashboard layout and settings are saved automatically to local storage.
+- **Export/Import**: Backup your dashboard configuration to a JSON file and restore it later.
 
-# Indian Stock API Key
-# Get your key from: https://stock.indianapi.in/
-NEXT_PUBLIC_INDIAN_API_KEY=your_indian_api_key_here
-# Alternative (server-side only):
-INDIAN_API_KEY=your_indian_api_key_here
-```
+## 🛠️ Tech Stack
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS, Shadcn UI patterns
+- **State Management**: Zustand (with Persist middleware)
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Grid Layout**: React-Grid-Layout
 
-Then, run the development server:
+## ⚙️ Setup & Installation
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/finboard.git
+    cd finboard
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3.  **Configure Environment Variables**
+    Create a `.env.local` file in the root directory:
+    ```env
+    NEXT_PUBLIC_FINNHUB_TOKEN=your_finnhub_api_key
+    NEXT_PUBLIC_ALPHAVANTAGE_TOKEN=your_alphavantage_key
+    ```
+    *Note: Get free keys from [Finnhub](https://finnhub.io/) and [Alpha Vantage](https://www.alphavantage.co/).*
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## 📖 Usage Guide
 
-To learn more about Next.js, take a look at the following resources:
+- **Adding a Widget**: Click the "+ Add Widget" button. Select a type (e.g., Chart) and use a preset (e.g., Finnhub Stock) or enter a custom API URL.
+- **Editing**: Click the Pencil icon on any widget header to modify its title or settings.
+- **Layout**: Drag widget headers to move them. Drag the bottom-right corner to resize.
+- **Templates**: Use the dropdown in the header to load a pre-configured dashboard.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🤝 Contributing
+Contributions are welcome! Please open an issue or submit a pull request.

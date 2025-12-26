@@ -44,7 +44,7 @@ export const TableWidget: React.FC<TableWidgetProps> = ({ widget }) => {
 
         return sortableItems.sort((a, b) => {
             const column = widget.config.dataMapping?.columns?.find(c => c.header === sortConfig.key);
-            const path = column ? column.path : sortConfig.key;
+            const path = column ? column.path : (sortConfig.key as string);
 
             const valA = getNestedValue(a, path);
             const valB = getNestedValue(b, path);
