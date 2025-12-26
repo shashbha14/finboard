@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Widget } from '@/lib/types';
 import { Card } from '@/components/ui/primitives';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import axios from 'axios';
 
@@ -107,8 +108,8 @@ export const WatchlistWidget = ({ widget }: WatchlistWidgetProps) => {
         };
 
         ws.onerror = (event) => {
-            console.error("WebSocket error:", event);
-            setError("WebSocket connection error.");
+            console.warn("WebSocket connection failed. Live updates disabled.");
+            // Do not set global error state, as polling fallback (initial fetch) might still work.
         };
 
         ws.onclose = (event) => {
@@ -126,7 +127,21 @@ export const WatchlistWidget = ({ widget }: WatchlistWidgetProps) => {
         };
     }, [JSON.stringify(symbols)]);
 
-    if (loading && data.length === 0) return <div className="p-4 flex justify-center text-xs text-muted-foreground">Loading watchlist...</div>;
+    if (loading && data.length === 0) {
+        return (
+            <div className="p-4 space-y-3">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="flex justify-between items-center">
+                        <Skeleton className="h-4 w-12" />
+                        <div className="space-y-1 text-right">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-3 w-10 ml-auto" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
     if (error) return <div className="p-4 text-xs text-destructive">{error}</div>;
 
     return (

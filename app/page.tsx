@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/primitives";
 import { Plus, Download, Upload } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useDashboardStore } from "@/lib/store";
+import { DASHBOARD_TEMPLATES } from "@/lib/templates";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,6 +78,34 @@ export default function Home() {
           <p className="text-muted-foreground text-sm">Real-time customizable finance dashboard</p>
         </div>
         <div className="flex items-center gap-2">
+          <select
+            className="bg-muted text-xs border border-border rounded px-2 py-1 h-9 focus:outline-none focus:ring-1 focus:ring-primary"
+            onChange={(e) => {
+              const template = DASHBOARD_TEMPLATES.find(t => t.id === e.target.value);
+              if (template) {
+                if (confirm(`Load ${template.name} template? This will overwrite your current dashboard.`)) {
+                  localStorage.setItem('finboard-storage', JSON.stringify({
+                    state: {
+                      widgets: template.widgets,
+                      layout: template.layout,
+                      theme: 'dark' // Default to dark for templates
+                    },
+                    version: 0
+                  }));
+                  window.location.reload();
+                }
+              }
+              e.target.value = ""; // Reset
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>Load Template...</option>
+            {DASHBOARD_TEMPLATES.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+          <div className="w-px h-6 bg-border mx-2"></div>
+
           <input
             type="file"
             ref={fileInputRef}

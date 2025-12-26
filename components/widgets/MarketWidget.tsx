@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Widget } from '@/lib/types';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import axios from 'axios';
 
@@ -52,7 +53,19 @@ export const MarketWidget = ({ widget }: MarketWidgetProps) => {
 
     const list = activeTab === 'gainers' ? data.gainers : data.losers;
 
-    if (loading) return <div className="p-4 text-xs text-center text-muted-foreground">Loading Market Data...</div>;
+    if (loading) {
+        return (
+            <div className="p-2 space-y-2">
+                <div className="flex gap-2">
+                    <Skeleton className="h-8 flex-1" />
+                    <Skeleton className="h-8 flex-1" />
+                </div>
+                <div className="space-y-2 mt-4">
+                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-full" />)}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full bg-card">

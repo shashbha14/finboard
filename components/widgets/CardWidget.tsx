@@ -6,11 +6,20 @@ interface CardWidgetProps {
     widget: Widget;
 }
 
+import { Skeleton } from '@/components/ui/Skeleton';
+
 export const CardWidget: React.FC<CardWidgetProps> = ({ widget }) => {
     const { data, loading, error } = useWidgetData(widget.config);
     const { valuePath, subtitlePath } = widget.config.dataMapping || {};
 
-    if (loading && !data) return <div className="p-4 animate-pulse">Loading...</div>;
+    if (loading) {
+        return (
+            <div className="flex flex-col justify-center h-full p-6 space-y-2">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </div>
+        );
+    }
     if (error) return <div className="p-4 text-red-400 text-xs">Error: {error}</div>;
     if (!data) return <div className="p-4 text-gray-500 text-xs">No Data</div>;
 
@@ -19,21 +28,21 @@ export const CardWidget: React.FC<CardWidgetProps> = ({ widget }) => {
 
     // Debug logging - always log for Alpha Vantage issues
     if (!value && valuePath) {
-        console.log('[CardWidget] Value not found:', { 
-            valuePath, 
+        console.log('[CardWidget] Value not found:', {
+            valuePath,
             hasData: !!data,
             dataKeys: data ? Object.keys(data) : [],
             globalQuote: data && data['Global Quote'] ? Object.keys(data['Global Quote']) : null,
-            value 
+            value
         });
     }
     if (!subtitle && subtitlePath) {
-        console.log('[CardWidget] Subtitle not found:', { 
-            subtitlePath, 
+        console.log('[CardWidget] Subtitle not found:', {
+            subtitlePath,
             hasData: !!data,
             dataKeys: data ? Object.keys(data) : [],
             globalQuote: data && data['Global Quote'] ? Object.keys(data['Global Quote']) : null,
-            subtitle 
+            subtitle
         });
     }
 
