@@ -9,13 +9,13 @@ FinBoard is a highly customizable, real-time finance dashboard built with Next.j
 - **Edit Configuration**: Modify existing widgets on the fly.
 - **Real-Time Data**: Live price updates using WebSockets (Finnhub).
 - **Multiple Data Sources**: 
-  - Finnhub (US Stocks, Candles)
+  - Finnhub (US Stocks)
   - Alpha Vantage (Global Quotes, Top Gainers)
   - Indian Stock API (NSE/BSE)
   - CoinGecko (Resilient Crypto Prices)
 
 ### Visualization & API
-- **Interactive Charts**: Switch between Area (Line) and Candle (Bar) representations with adjustable time intervals (Day, Week, Month).
+- **Interactive Charts**: Area (Line) representation with adjustable time intervals (Day, Week, Month).
 - **Specialized Widgets**:
   - **Watchlist**: Track multiple tickers with live color-coded updates.
   - **Market**: View Top Gainers/Losers.
@@ -54,6 +54,7 @@ FinBoard is a highly customizable, real-time finance dashboard built with Next.j
     ```env
     NEXT_PUBLIC_FINNHUB_TOKEN=your_finnhub_api_key
     NEXT_PUBLIC_ALPHAVANTAGE_TOKEN=your_alphavantage_key
+    NEXT_PUBLIC_INDIANAPI_TOKEN=your_indianapi_key
     ```
     *Note: Get free keys from [Finnhub](https://finnhub.io/) and [Alpha Vantage](https://www.alphavantage.co/).*
 
