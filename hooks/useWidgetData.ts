@@ -16,7 +16,7 @@ export const getNestedValue = (obj: any, path: string) => {
 
     for (let i = 0; i < path.length; i++) {
         const char = path[i];
-        
+
         if (char === '[' && !inBrackets) {
             // When we hit a bracket, save current part (could be "Global Quote" with space)
             if (current.trim()) {
@@ -34,13 +34,18 @@ export const getNestedValue = (obj: any, path: string) => {
         } else if (inBrackets) {
             // Inside brackets, collect everything
             bracketContent += char;
+        } else if (char === '.' && !inBrackets) {
+            // Split on dots when not inside brackets
+            if (current.trim()) {
+                parts.push(current.trim());
+                current = '';
+            }
         } else {
-            // Outside brackets, collect characters (including spaces and dots)
-            // Don't split on dots here - only split when we hit brackets
+            // Outside brackets, collect characters
             current += char;
         }
     }
-    
+
     if (current.trim()) {
         parts.push(current.trim());
     }

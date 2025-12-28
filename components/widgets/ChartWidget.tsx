@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Widget } from '@/lib/types';
-import { useWidgetData } from '@/hooks/useWidgetData';
+import { useWidgetData, getNestedValue } from '@/hooks/useWidgetData';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -12,27 +12,34 @@ export const ChartWidget: React.FC<ChartWidgetProps> = ({ widget }) => {
     // Default hook data (generic API)
     const { data, loading: isLoading, error } = useWidgetData(widget.config);
     const [interval, setInterval] = useState<'D' | 'W' | 'M'>('D');
-    const { xAxisPath, yAxisPath } = widget.config.dataMapping || {};
+    const { dataPath, xAxisPath, yAxisPath } = widget.config.dataMapping || {};
 
     const chartData = useMemo(() => {
         if (isLoading || !data) return [];
 
         let processedData: any[] = [];
-        if (Array.isArray(data)) {
-            processedData = data;
-        } else if (typeof data === 'object' && data !== null) {
-            const timeSeriesKey = Object.keys(data).find(k => k.includes('Time Series') || k.includes('Daily') || k.includes('Weekly'));
-            if (timeSeriesKey && typeof data[timeSeriesKey] === 'object') {
-                processedData = Object.entries(data[timeSeriesKey]).map(([date, values]: [string, any]) => ({
+
+        // If dataPath is specified, extract the nested array first
+        let sourceData = data;
+        if (dataPath) {
+            sourceData = getNestedValue(data, dataPath);
+        }
+
+        if (Array.isArray(sourceData)) {
+            processedData = sourceData;
+        } else if (typeof sourceData === 'object' && sourceData !== null) {
+            const timeSeriesKey = Object.keys(sourceData).find(k => k.includes('Time Series') || k.includes('Daily') || k.includes('Weekly'));
+            if (timeSeriesKey && typeof sourceData[timeSeriesKey] === 'object') {
+                processedData = Object.entries(sourceData[timeSeriesKey]).map(([date, values]: [string, any]) => ({
                     date,
                     ...values
                 })).reverse();
             } else {
-                processedData = [{ date: 'Current', ...data }];
+                processedData = [{ date: 'Current', ...sourceData }];
             }
         }
         return processedData;
-    }, [data, isLoading]);
+    }, [data, isLoading, dataPath]);
 
     if (isLoading) {
         return (

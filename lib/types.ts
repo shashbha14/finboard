@@ -17,6 +17,7 @@ export interface WidgetConfig {
     columns?: Array<{ header: string; path: string }>;
 
     // For CHART:
+    dataPath?: string; // Path to the array containing chart data (e.g., "stockTechnicalData")
     xAxisPath?: string;
     yAxisPath?: string;
   };

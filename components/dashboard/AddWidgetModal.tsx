@@ -63,8 +63,8 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose,
             // Use Next.js API proxy to avoid CORS issues
             getUrl: (name: string) => `/api/indianapi?name=${encodeURIComponent(name)}`,
             mapping: {
-                valuePath: '',
-                subtitlePath: ''
+                valuePath: 'currentPrice.NSE',
+                subtitlePath: 'percentChange'
             }
         }
     ];
@@ -117,9 +117,16 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose,
                 return;
             }
 
+            // Set default symbol for Indian Stock API
+            let currentSymbol = symbol;
+            if (preset.name === 'Indian Stock API' && symbol === 'AAPL') {
+                currentSymbol = 'TCS';
+                setSymbol('TCS');
+            }
+
             // If it's a dynamic preset, use the current symbol/name
             const newUrl = (preset as any).isDynamic
-                ? (preset as any).getUrl(symbol)
+                ? (preset as any).getUrl(currentSymbol)
                 : preset.url;
 
             // Set different mappings based on widget type
@@ -187,17 +194,47 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose,
                     };
                 }
             } else if (preset.name === 'Indian Stock API') {
-                // For Indian Stock API, accordion widget displays entire JSON structure
-                // No special mapping needed - accordion handles nested data automatically
-                dataMapping = {
-                    valuePath: '',
-                    subtitlePath: ''
-                };
+                // For Indian Stock API, customize mapping based on widget type
+                if (type === 'chart') {
+                    dataMapping = {
+                        valuePath: '', // Not used for charts
+                        subtitlePath: '', // Not used for charts
+                        dataPath: 'stockTechnicalData', // Path to the array containing chart data
+                        xAxisPath: 'days', // days from stockTechnicalData
+                        yAxisPath: 'nsePrice', // NSE price from stockTechnicalData
+                    };
+                } else if (type === 'table') {
+                    dataMapping = {
+                        valuePath: '', // Not used for tables
+                        subtitlePath: '', // Not used for tables
+                        listPath: 'peerCompanyList',
+                        columns: [
+                            { header: 'Company', path: 'companyName' },
+                            { header: 'Price', path: 'price' },
+                            { header: 'Change %', path: 'percentChange' },
+                            { header: 'Market Cap', path: 'marketCap' },
+                            { header: 'P/E Ratio', path: 'priceToEarningsValueRatio' },
+                        ]
+                    };
+                } else if (type === 'accordion') {
+                    // Accordion widget displays entire JSON structure
+                    // No special mapping needed - accordion handles nested data automatically
+                    dataMapping = {
+                        valuePath: '',
+                        subtitlePath: ''
+                    };
+                } else {
+                    // Card widget - show current NSE price and percent change
+                    dataMapping = {
+                        valuePath: 'currentPrice.NSE',
+                        subtitlePath: 'percentChange'
+                    };
+                }
             }
 
             // For Indian API, use appropriate title
             let widgetTitle = (preset as any).isDynamic
-                ? (preset.name === 'Indian Stock API' ? `${symbol} Stock Info` : `${symbol} Price`)
+                ? (preset.name === 'Indian Stock API' ? `${currentSymbol} Stock Info` : `${currentSymbol} Price`)
                 : preset.name.replace(/\s\(.*\)/, '');
 
             setLocalTitle(widgetTitle);
@@ -295,12 +332,42 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose,
                     };
                 }
             } else if (selectedPreset === 'Indian Stock API') {
-                // For Indian Stock API, accordion widget displays entire JSON structure
-                // No special mapping needed - accordion handles nested data automatically
-                dataMapping = {
-                    valuePath: '',
-                    subtitlePath: ''
-                };
+                // For Indian Stock API, customize mapping based on widget type
+                if (type === 'chart') {
+                    dataMapping = {
+                        valuePath: '', // Not used for charts
+                        subtitlePath: '', // Not used for charts
+                        dataPath: 'stockTechnicalData', // Path to the array containing chart data
+                        xAxisPath: 'days', // days from stockTechnicalData
+                        yAxisPath: 'nsePrice', // NSE price from stockTechnicalData
+                    };
+                } else if (type === 'table') {
+                    dataMapping = {
+                        valuePath: '', // Not used for tables
+                        subtitlePath: '', // Not used for tables
+                        listPath: 'peerCompanyList',
+                        columns: [
+                            { header: 'Company', path: 'companyName' },
+                            { header: 'Price', path: 'price' },
+                            { header: 'Change %', path: 'percentChange' },
+                            { header: 'Market Cap', path: 'marketCap' },
+                            { header: 'P/E Ratio', path: 'priceToEarningsValueRatio' },
+                        ]
+                    };
+                } else if (type === 'accordion') {
+                    // Accordion widget displays entire JSON structure
+                    // No special mapping needed - accordion handles nested data automatically
+                    dataMapping = {
+                        valuePath: '',
+                        subtitlePath: ''
+                    };
+                } else {
+                    // Card widget - show current NSE price and percent change
+                    dataMapping = {
+                        valuePath: 'currentPrice.NSE',
+                        subtitlePath: 'percentChange'
+                    };
+                }
             }
 
             setConfig(prev => ({ ...prev, dataMapping }));
@@ -414,7 +481,7 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose,
                             className="mt-1 bg-background"
                         />
                     </div>
-                    {selectedPreset === 'Custom' ? (
+                    {selectedPreset === 'Custom' && (
                         <div>
                             <label className="text-xs uppercase text-muted-foreground font-semibold">API URL</label>
                             <Input
@@ -423,10 +490,6 @@ export const AddWidgetModal: React.FC<AddWidgetModalProps> = ({ isOpen, onClose,
                                 placeholder="https://api.example.com/data"
                                 className="mt-1 font-mono text-xs text-muted-foreground bg-background"
                             />
-                        </div>
-                    ) : (
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-600 dark:text-blue-300">
-                            Using secure endpoint with environment token.
                         </div>
                     )}
                     <div className="grid grid-cols-2 gap-4">
